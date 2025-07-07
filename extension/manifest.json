@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Webpage Summarizer",
+  "version": "1.0",
+  "description": "Sends webpage URL to a webhook for summarization",
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+} 
