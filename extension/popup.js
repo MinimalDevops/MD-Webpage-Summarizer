@@ -3,40 +3,51 @@ document.getElementById('summarizeBtn').addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const currentUrl = tab.url;
 
-  try {
-    // n8n specific headers and configuration
-    const response = await fetch('http://localhost:5678/webhook-test/chrome-trigger', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        Link: currentUrl,
-        timestamp: new Date().toISOString(),
-        source: 'chrome-extension'
-      })
-    });
+  const urls = [
+    'http://localhost:5678/webhook/chrome-trigger',
+    'http://localhost:5678/webhook-test/chrome-trigger'
+  ];
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  let success = false;
+  let lastError = null;
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          Link: currentUrl,
+          timestamp: new Date().toISOString(),
+          source: 'chrome-extension'
+        })
+      });
+      if (response.ok) {
+        success = true;
+        break;
+      } else {
+        lastError = new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      lastError = error;
     }
+  }
 
-    // Change button text temporarily to show success
-    const button = document.getElementById('summarizeBtn');
-    const originalText = button.textContent;
+  const button = document.getElementById('summarizeBtn');
+  const originalText = button.textContent;
+
+  if (success) {
     button.textContent = 'Sent to n8n!';
     button.style.backgroundColor = '#ff6d00'; // n8n orange color
     setTimeout(() => {
       button.textContent = originalText;
       button.style.backgroundColor = '#4CAF50';
     }, 2000);
-
-  } catch (error) {
-    console.error('Error:', error);
-    // Show error state
-    const button = document.getElementById('summarizeBtn');
-    const originalText = button.textContent;
+  } else {
+    console.error('Error:', lastError);
     button.textContent = 'Error!';
     button.style.backgroundColor = '#ff4444';
     setTimeout(() => {
